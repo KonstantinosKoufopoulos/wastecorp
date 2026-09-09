@@ -6,7 +6,7 @@ import '../widgets/primary_cta.dart';
 
 enum UpgradePick { truck, yard }
 
-/// S6 — Upgrade choice: Truck | Yard forced pick + dismissable offline banner.
+/// S6 — Truck|+20% haul | Yard|+1 bin speed · forced pick · offline banner.
 class S6UpgradeChoiceScreen extends StatefulWidget {
   const S6UpgradeChoiceScreen({super.key, required this.onDone});
 
@@ -31,16 +31,17 @@ class _S6UpgradeChoiceScreenState extends State<S6UpgradeChoiceScreen> {
                 color: AppColors.accent.withValues(alpha: 0.25),
                 child: ListTile(
                   dense: true,
-                  leading: const Icon(Icons.cloud_off_outlined,
-                      color: AppColors.ink),
+                  leading: const Icon(
+                    Icons.cloud_off_outlined,
+                    color: AppColors.ink,
+                  ),
                   title: const Text(
                     'Offline progress unlocks after this — come back bigger.',
                     style: TextStyle(fontSize: 13, color: AppColors.ink),
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.close, size: 20),
-                    onPressed: () =>
-                        setState(() => showOfflineBanner = false),
+                    onPressed: () => setState(() => showOfflineBanner = false),
                   ),
                 ),
               ),
@@ -76,7 +77,7 @@ class _S6UpgradeChoiceScreenState extends State<S6UpgradeChoiceScreen> {
                             selected: pick == UpgradePick.truck,
                             icon: Icons.local_shipping_outlined,
                             title: 'Truck',
-                            subtitle: 'Faster hauls',
+                            subtitle: '+20% haul',
                             onTap: () =>
                                 setState(() => pick = UpgradePick.truck),
                           ),
@@ -87,7 +88,7 @@ class _S6UpgradeChoiceScreenState extends State<S6UpgradeChoiceScreen> {
                             selected: pick == UpgradePick.yard,
                             icon: Icons.warehouse_outlined,
                             title: 'Yard',
-                            subtitle: 'More capacity',
+                            subtitle: '+1 bin speed',
                             onTap: () =>
                                 setState(() => pick = UpgradePick.yard),
                           ),

@@ -29,15 +29,15 @@ class S0SplashYardScreen extends StatelessWidget {
                 child: const Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.local_shipping_outlined,
-                        size: 56, color: AppColors.inkMuted),
+                    Icon(
+                      Icons.local_shipping_outlined,
+                      size: 56,
+                      color: AppColors.inkMuted,
+                    ),
                     SizedBox(height: 8),
                     Text(
                       'One truck. A messy yard.',
-                      style: TextStyle(
-                        color: AppColors.inkMuted,
-                        fontSize: 14,
-                      ),
+                      style: TextStyle(color: AppColors.inkMuted, fontSize: 14),
                     ),
                   ],
                 ),

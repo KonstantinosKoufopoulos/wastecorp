@@ -30,4 +30,5 @@ class ReputationNotifier extends Notifier<ReputationState> {
 
 final reputationProvider =
     NotifierProvider<ReputationNotifier, ReputationState>(
-        ReputationNotifier.new);
+      ReputationNotifier.new,
+    );

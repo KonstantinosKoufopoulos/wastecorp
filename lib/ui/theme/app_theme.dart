@@ -44,9 +44,7 @@ class AppTheme {
             fontWeight: FontWeight.w600,
             letterSpacing: 0.5,
           ),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
-          ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
         ),
       ),
       cardTheme: CardThemeData(

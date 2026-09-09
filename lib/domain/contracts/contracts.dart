@@ -5,6 +5,7 @@ class DistrictContract {
     required this.id,
     required this.districtName,
     required this.loadsRequired,
+    required this.timeLimitSeconds,
     required this.rewardCash,
     required this.rewardReputation,
   });
@@ -12,6 +13,7 @@ class DistrictContract {
   final String id;
   final String districtName;
   final int loadsRequired;
+  final int timeLimitSeconds;
   final int rewardCash;
   final int rewardReputation;
 }
@@ -32,21 +34,21 @@ class ContractState {
     int? loadsDone,
     bool? completed,
     bool clearActive = false,
-  }) =>
-      ContractState(
-        active: clearActive ? null : (active ?? this.active),
-        loadsDone: loadsDone ?? this.loadsDone,
-        completed: completed ?? this.completed,
-      );
+  }) => ContractState(
+    active: clearActive ? null : (active ?? this.active),
+    loadsDone: loadsDone ?? this.loadsDone,
+    completed: completed ?? this.completed,
+  );
 }
 
-/// Tutorial district contract: 3 loads in time.
+/// Tutorial district contract: 3 loads / 90s · $80 + +1 rep (Christos locked).
 const kTutorialContract = DistrictContract(
   id: 'district_north',
   districtName: 'North District',
   loadsRequired: 3,
+  timeLimitSeconds: 90,
   rewardCash: 80,
-  rewardReputation: 10,
+  rewardReputation: 1,
 );
 
 class ContractNotifier extends Notifier<ContractState> {
@@ -61,14 +63,12 @@ class ContractNotifier extends Notifier<ContractState> {
     final c = state.active;
     if (c == null) return;
     final done = state.loadsDone + 1;
-    state = state.copyWith(
-      loadsDone: done,
-      completed: done >= c.loadsRequired,
-    );
+    state = state.copyWith(loadsDone: done, completed: done >= c.loadsRequired);
   }
 
   void clear() => state = const ContractState();
 }
 
-final contractProvider =
-    NotifierProvider<ContractNotifier, ContractState>(ContractNotifier.new);
+final contractProvider = NotifierProvider<ContractNotifier, ContractState>(
+  ContractNotifier.new,
+);

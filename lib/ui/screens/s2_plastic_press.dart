@@ -6,7 +6,7 @@ import '../theme/app_theme.dart';
 import '../widgets/money_hud.dart';
 import '../widgets/primary_cta.dart';
 
-/// S2 — Plastic press: Process button + progress + cash pop stub.
+/// S2 — Plastic press: 1 tap · 2.0s process · +$25 · auto-advance.
 class S2PlasticPressScreen extends ConsumerStatefulWidget {
   const S2PlasticPressScreen({super.key, required this.onContinue});
 
@@ -17,31 +17,54 @@ class S2PlasticPressScreen extends ConsumerStatefulWidget {
       _S2PlasticPressScreenState();
 }
 
-class _S2PlasticPressScreenState extends ConsumerState<S2PlasticPressScreen> {
-  double progress = 0;
+class _S2PlasticPressScreenState extends ConsumerState<S2PlasticPressScreen>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _progress;
   bool processing = false;
   bool done = false;
   int? cashPop;
+
+  @override
+  void initState() {
+    super.initState();
+    _progress =
+        AnimationController(
+          vsync: this,
+          duration: Duration(
+            milliseconds: (kPlasticPressSeconds * 1000).round(),
+          ),
+        )..addStatusListener((status) {
+          if (status == AnimationStatus.completed) {
+            _onProcessComplete();
+          }
+        });
+  }
+
+  @override
+  void dispose() {
+    _progress.dispose();
+    super.dispose();
+  }
 
   Future<void> _process() async {
     if (processing || done) return;
     setState(() {
       processing = true;
-      progress = 0;
       cashPop = null;
     });
-    const steps = 20;
-    for (var i = 1; i <= steps; i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 40));
-      if (!mounted) return;
-      setState(() => progress = i / steps);
-    }
-    ref.read(economyProvider.notifier).addCash(kPlasticPressPayout);
+    await _progress.forward(from: 0);
+  }
+
+  Future<void> _onProcessComplete() async {
+    await ref.read(economyProvider.notifier).addCash(kPlasticPressPayout);
+    if (!mounted) return;
     setState(() {
       processing = false;
       done = true;
       cashPop = kPlasticPressPayout;
     });
+    await Future<void>.delayed(const Duration(milliseconds: 700));
+    if (mounted) widget.onContinue();
   }
 
   @override
@@ -53,10 +76,7 @@ class _S2PlasticPressScreenState extends ConsumerState<S2PlasticPressScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Align(
-                alignment: Alignment.topRight,
-                child: MoneyHud(),
-              ),
+              const Align(alignment: Alignment.topRight, child: MoneyHud()),
               const SizedBox(height: 12),
               const Text(
                 'Plastic press',
@@ -68,7 +88,7 @@ class _S2PlasticPressScreenState extends ConsumerState<S2PlasticPressScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                'Process sorted plastic into bales → cash.',
+                'One tap. Process sorted plastic into bales → cash.',
                 style: TextStyle(color: AppColors.inkMuted),
               ),
               const Spacer(),
@@ -87,17 +107,27 @@ class _S2PlasticPressScreenState extends ConsumerState<S2PlasticPressScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          const Icon(Icons.precision_manufacturing_outlined,
-                              size: 56, color: AppColors.plastic),
+                          const Icon(
+                            Icons.precision_manufacturing_outlined,
+                            size: 56,
+                            color: AppColors.plastic,
+                          ),
                           const SizedBox(height: 12),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 24),
-                            child: LinearProgressIndicator(
-                              value: progress,
-                              minHeight: 8,
-                              borderRadius: BorderRadius.circular(4),
-                              color: AppColors.plastic,
-                              backgroundColor: AppColors.surfaceDark,
+                            child: AnimatedBuilder(
+                              animation: _progress,
+                              builder: (context, _) {
+                                return LinearProgressIndicator(
+                                  value: processing || done
+                                      ? _progress.value
+                                      : 0,
+                                  minHeight: 8,
+                                  borderRadius: BorderRadius.circular(4),
+                                  color: AppColors.plastic,
+                                  backgroundColor: AppColors.surfaceDark,
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -125,10 +155,7 @@ class _S2PlasticPressScreenState extends ConsumerState<S2PlasticPressScreen> {
                   onPressed: processing ? null : _process,
                 )
               else
-                PrimaryCta(
-                  label: 'Continue',
-                  onPressed: widget.onContinue,
-                ),
+                const PrimaryCta(label: 'Paid — continuing…', onPressed: null),
             ],
           ),
         ),

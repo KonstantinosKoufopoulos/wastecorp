@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -8,7 +10,7 @@ import '../theme/app_theme.dart';
 import '../widgets/money_hud.dart';
 import '../widgets/primary_cta.dart';
 
-/// S5 — Contract: district card Accept + active chip.
+/// S5 — Contract: 3 loads / 90s · Accept · chip HUD · \$80 + +1 rep.
 class S5ContractScreen extends ConsumerStatefulWidget {
   const S5ContractScreen({super.key, required this.onContinue});
 
@@ -20,32 +22,72 @@ class S5ContractScreen extends ConsumerStatefulWidget {
 
 class _S5ContractScreenState extends ConsumerState<S5ContractScreen> {
   bool accepted = false;
-  bool delivering = false;
+  bool hauling = false;
+  bool rewarded = false;
+  int secondsLeft = kTutorialContract.timeLimitSeconds;
+  Timer? _timer;
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
 
   void _accept() {
     ref.read(contractProvider.notifier).accept(kTutorialContract);
-    setState(() => accepted = true);
+    setState(() {
+      accepted = true;
+      secondsLeft = kTutorialContract.timeLimitSeconds;
+    });
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) {
+        t.cancel();
+        return;
+      }
+      if (secondsLeft <= 0 || ref.read(contractProvider).completed) {
+        t.cancel();
+        return;
+      }
+      setState(() => secondsLeft--);
+    });
   }
 
-  Future<void> _completeLoads() async {
-    if (delivering) return;
-    setState(() => delivering = true);
-    final notifier = ref.read(contractProvider.notifier);
-    for (var i = 0; i < kTutorialContract.loadsRequired; i++) {
-      await Future<void>.delayed(const Duration(milliseconds: 350));
-      if (!mounted) return;
-      notifier.recordLoad();
+  Future<void> _sendLoad() async {
+    final state = ref.read(contractProvider);
+    if (!accepted || state.completed || hauling || secondsLeft <= 0) return;
+    setState(() => hauling = true);
+    await Future<void>.delayed(const Duration(milliseconds: 900));
+    if (!mounted) return;
+    ref.read(contractProvider.notifier).recordLoad();
+    setState(() => hauling = false);
+    final done = ref.read(contractProvider).completed;
+    if (done) {
+      await _grantReward();
     }
+  }
+
+  Future<void> _grantReward() async {
+    if (rewarded) return;
+    rewarded = true;
+    _timer?.cancel();
     final c = kTutorialContract;
-    ref.read(economyProvider.notifier).addCash(c.rewardCash);
-    ref.read(reputationProvider.notifier).add(c.rewardReputation);
-    setState(() => delivering = false);
+    await ref.read(economyProvider.notifier).addCash(c.rewardCash);
+    await ref.read(reputationProvider.notifier).add(c.rewardReputation);
+    if (mounted) setState(() {});
+  }
+
+  String get _timerLabel {
+    final m = secondsLeft ~/ 60;
+    final s = (secondsLeft % 60).toString().padLeft(2, '0');
+    return '$m:$s';
   }
 
   @override
   Widget build(BuildContext context) {
     final contract = ref.watch(contractProvider);
     final done = contract.completed;
+    final timedOut = accepted && !done && secondsLeft <= 0;
 
     return Scaffold(
       body: SafeArea(
@@ -59,7 +101,11 @@ class _S5ContractScreenState extends ConsumerState<S5ContractScreen> {
                   if (accepted)
                     Chip(
                       avatar: Icon(
-                        done ? Icons.check_circle : Icons.local_shipping,
+                        done
+                            ? Icons.check_circle
+                            : timedOut
+                            ? Icons.timer_off_outlined
+                            : Icons.local_shipping,
                         size: 18,
                         color: AppColors.primary,
                       ),
@@ -67,11 +113,13 @@ class _S5ContractScreenState extends ConsumerState<S5ContractScreen> {
                         done
                             ? 'Contract done'
                             : '${kTutorialContract.districtName} '
-                                '${contract.loadsDone}/'
-                                '${kTutorialContract.loadsRequired}',
+                                  '${contract.loadsDone}/'
+                                  '${kTutorialContract.loadsRequired}'
+                                  ' · $_timerLabel',
                       ),
-                      backgroundColor:
-                          AppColors.primary.withValues(alpha: 0.12),
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.12,
+                      ),
                       side: BorderSide.none,
                     ),
                   const Spacer(),
@@ -101,8 +149,10 @@ class _S5ContractScreenState extends ConsumerState<S5ContractScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(Icons.map_outlined,
-                              color: AppColors.primary),
+                          const Icon(
+                            Icons.map_outlined,
+                            color: AppColors.primary,
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             kTutorialContract.districtName,
@@ -116,7 +166,8 @@ class _S5ContractScreenState extends ConsumerState<S5ContractScreen> {
                       ),
                       const SizedBox(height: 12),
                       Text(
-                        'Deliver ${kTutorialContract.loadsRequired} loads.',
+                        'Deliver ${kTutorialContract.loadsRequired} loads '
+                        'in ${kTutorialContract.timeLimitSeconds}s.',
                         style: const TextStyle(
                           fontSize: 15,
                           color: AppColors.ink,
@@ -125,12 +176,46 @@ class _S5ContractScreenState extends ConsumerState<S5ContractScreen> {
                       const SizedBox(height: 4),
                       Text(
                         'Reward: \$${kTutorialContract.rewardCash} + '
-                        '${kTutorialContract.rewardReputation} reputation',
+                        '+${kTutorialContract.rewardReputation} rep',
                         style: const TextStyle(
                           fontSize: 14,
                           color: AppColors.inkMuted,
                         ),
                       ),
+                      if (accepted && !done) ...[
+                        const SizedBox(height: 16),
+                        LinearProgressIndicator(
+                          value:
+                              contract.loadsDone /
+                              kTutorialContract.loadsRequired,
+                          minHeight: 8,
+                          borderRadius: BorderRadius.circular(4),
+                          color: AppColors.primary,
+                          backgroundColor: AppColors.surfaceDark,
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          timedOut
+                              ? 'Time’s up — send remaining loads anyway.'
+                              : 'Load ready when you tap Send.',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: AppColors.inkMuted,
+                          ),
+                        ),
+                      ],
+                      if (done) ...[
+                        const SizedBox(height: 16),
+                        Text(
+                          '+\$${kTutorialContract.rewardCash}  ·  '
+                          '+${kTutorialContract.rewardReputation} rep',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.money,
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -140,8 +225,8 @@ class _S5ContractScreenState extends ConsumerState<S5ContractScreen> {
                 PrimaryCta(label: 'Accept', onPressed: _accept)
               else if (!done)
                 PrimaryCta(
-                  label: delivering ? 'Hauling…' : 'Run contract (stub)',
-                  onPressed: delivering ? null : _completeLoads,
+                  label: hauling ? 'Hauling…' : 'Send load',
+                  onPressed: hauling ? null : _sendLoad,
                 )
               else
                 PrimaryCta(

@@ -7,8 +7,9 @@ import '../theme/app_theme.dart';
 import '../widgets/money_hud.dart';
 import '../widgets/primary_cta.dart';
 import '../yard/bin_placeholder.dart';
+import '../yard/draggable_sort_item.dart';
 
-/// S1 — Sort: dump pile, 3 bins, tap-to-sort placeholder, money HUD.
+/// S1 — Real drag-sort: 8 items, 72² / bin 120², juice + payouts, advance at 8.
 class S1SortScreen extends ConsumerStatefulWidget {
   const S1SortScreen({super.key, required this.onContinue});
 
@@ -19,37 +20,36 @@ class S1SortScreen extends ConsumerStatefulWidget {
 }
 
 class _S1SortScreenState extends ConsumerState<S1SortScreen> {
-  int pileLeft = 6;
+  late List<SortItemData> pile;
   final Map<WasteMaterial, int> sorted = {
     WasteMaterial.plastic: 0,
     WasteMaterial.metal: 0,
     WasteMaterial.paper: 0,
   };
+  String? lastPopLabel;
+  WasteMaterial? lastCorrect;
 
-  /// Cycle target for tap-to-sort placeholder (drag-ish later).
-  WasteMaterial _nextTarget = WasteMaterial.plastic;
-
-  void _tapSort(WasteMaterial bin) {
-    if (pileLeft <= 0) return;
-    // Forgiving: any tap sorts into that bin for the stub.
-    setState(() {
-      pileLeft--;
-      sorted[bin] = (sorted[bin] ?? 0) + 1;
-      _nextTarget = switch (bin) {
-        WasteMaterial.plastic => WasteMaterial.metal,
-        WasteMaterial.metal => WasteMaterial.paper,
-        _ => WasteMaterial.plastic,
-      };
-    });
-    // Small cash tease for correct-feeling feedback (tutorial juice).
-    if (bin == WasteMaterial.plastic ||
-        bin == WasteMaterial.metal ||
-        bin == WasteMaterial.paper) {
-      ref.read(economyProvider.notifier).addCash(2);
-    }
+  @override
+  void initState() {
+    super.initState();
+    pile = buildTruckload(kS1ItemCount, prefix: 's1');
   }
 
-  bool get _ready => pileLeft == 0;
+  bool get _ready => pile.isEmpty;
+
+  Future<void> _onAccept(SortItemData item) async {
+    final payout = sortPayoutFor(item.material);
+    setState(() {
+      pile = pile.where((e) => e.id != item.id).toList();
+      sorted[item.material] = (sorted[item.material] ?? 0) + 1;
+      lastCorrect = item.material;
+      lastPopLabel = '+\$$payout';
+    });
+    await ref.read(economyProvider.notifier).addCash(payout);
+    if (!mounted) return;
+    await Future<void>.delayed(const Duration(milliseconds: 500));
+    if (mounted) setState(() => lastPopLabel = null);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -60,10 +60,7 @@ class _S1SortScreenState extends ConsumerState<S1SortScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Align(
-                alignment: Alignment.topRight,
-                child: MoneyHud(),
-              ),
+              const Align(alignment: Alignment.topRight, child: MoneyHud()),
               const SizedBox(height: 12),
               const Text(
                 'Sort the dump',
@@ -75,78 +72,99 @@ class _S1SortScreenState extends ConsumerState<S1SortScreen> {
               ),
               const SizedBox(height: 4),
               Text(
-                pileLeft > 0
-                    ? 'Tap a bin to sort ($pileLeft left) — drag later'
+                pile.isNotEmpty
+                    ? 'Drag each item into the matching bin (${pile.length} left)'
                     : 'Pile clear. Plastic ready for the press.',
                 style: const TextStyle(color: AppColors.inkMuted),
               ),
-              const SizedBox(height: 24),
-              // Dump pile
+              const SizedBox(height: 16),
               Expanded(
-                child: Center(
-                  child: Container(
-                    width: 140,
-                    height: 140,
-                    decoration: BoxDecoration(
-                      color: AppColors.yardDirty.withValues(alpha: 0.4),
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(
-                        color: AppColors.yardDirty,
-                        width: 2,
-                      ),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(
-                          Icons.inventory_2_outlined,
-                          size: 48,
-                          color: pileLeft > 0
-                              ? AppColors.ink
-                              : AppColors.inkMuted,
+                child: Stack(
+                  alignment: Alignment.center,
+                  children: [
+                    Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: AppColors.yardDirty.withValues(alpha: 0.25),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: AppColors.yardDirty,
+                          width: 2,
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          pileLeft > 0 ? 'Dump pile' : 'Empty',
+                      ),
+                      child: pile.isEmpty
+                          ? const Center(
+                              child: Text(
+                                'Empty',
+                                style: TextStyle(
+                                  color: AppColors.inkMuted,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            )
+                          : Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Wrap(
+                                spacing: 12,
+                                runSpacing: 12,
+                                alignment: WrapAlignment.center,
+                                children: [
+                                  for (final item in pile)
+                                    DraggableSortItem(item: item),
+                                ],
+                              ),
+                            ),
+                    ),
+                    if (lastPopLabel != null)
+                      Positioned(
+                        top: 12,
+                        child: Text(
+                          lastPopLabel!,
                           style: const TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.ink,
+                            fontSize: 28,
+                            fontWeight: FontWeight.w800,
+                            color: AppColors.money,
                           ),
                         ),
-                        Text(
-                          '×$pileLeft',
-                          style: const TextStyle(color: AppColors.inkMuted),
-                        ),
-                      ],
-                    ),
-                  ),
+                      ),
+                  ],
                 ),
               ),
-              // Three bins
+              const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   BinPlaceholder(
                     type: WasteMaterial.plastic,
                     count: sorted[WasteMaterial.plastic]!,
-                    highlighted: _nextTarget == WasteMaterial.plastic,
-                    onTap: () => _tapSort(WasteMaterial.plastic),
+                    highlighted: lastCorrect == WasteMaterial.plastic,
+                    onAccept: _onAccept,
                   ),
                   BinPlaceholder(
                     type: WasteMaterial.metal,
                     count: sorted[WasteMaterial.metal]!,
-                    highlighted: _nextTarget == WasteMaterial.metal,
-                    onTap: () => _tapSort(WasteMaterial.metal),
+                    highlighted: lastCorrect == WasteMaterial.metal,
+                    onAccept: _onAccept,
                   ),
                   BinPlaceholder(
                     type: WasteMaterial.paper,
                     count: sorted[WasteMaterial.paper]!,
-                    highlighted: _nextTarget == WasteMaterial.paper,
-                    onTap: () => _tapSort(WasteMaterial.paper),
+                    highlighted: lastCorrect == WasteMaterial.paper,
+                    onAccept: _onAccept,
                   ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 8),
+              Text(
+                'Wrong bin soft-bounces · correct pays '
+                '\$$kSortPlasticPayout / \$$kSortMetalPayout / \$$kSortPaperPayout',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: AppColors.inkMuted.withValues(alpha: 0.85),
+                  fontSize: 11,
+                ),
+              ),
+              const SizedBox(height: 16),
               PrimaryCta(
                 label: _ready ? 'Open plastic press' : 'Keep sorting…',
                 onPressed: _ready ? widget.onContinue : null,

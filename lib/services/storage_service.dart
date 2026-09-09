@@ -36,23 +36,19 @@ class StorageService {
 
   static Future<void> setCash(int value) => box.put(keyCash, value);
 
-  static int getReputation() =>
-      box.get(keyReputation, defaultValue: 0) as int;
+  static int getReputation() => box.get(keyReputation, defaultValue: 0) as int;
 
-  static Future<void> setReputation(int value) =>
-      box.put(keyReputation, value);
+  static Future<void> setReputation(int value) => box.put(keyReputation, value);
 
   static bool getHasWorker() =>
       box.get(keyHasWorker, defaultValue: false) as bool;
 
-  static Future<void> setHasWorker(bool value) =>
-      box.put(keyHasWorker, value);
+  static Future<void> setHasWorker(bool value) => box.put(keyHasWorker, value);
 
   static bool getLinesOpen() =>
       box.get(keyLinesOpen, defaultValue: false) as bool;
 
-  static Future<void> setLinesOpen(bool value) =>
-      box.put(keyLinesOpen, value);
+  static Future<void> setLinesOpen(bool value) => box.put(keyLinesOpen, value);
 
   static Future<void> clearAll() => box.clear();
 }

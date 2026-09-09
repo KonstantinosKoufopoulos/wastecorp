@@ -39,9 +39,7 @@ class _TutorialShellState extends ConsumerState<TutorialShell> {
   Widget build(BuildContext context) {
     final s = step;
     if (s == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
     return switch (s) {
       0 => S0SplashYardScreen(onStart: () => _go(1)),
@@ -68,8 +66,11 @@ class _TutorialCompleteScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.factory_outlined,
-                  size: 64, color: AppColors.primary),
+              const Icon(
+                Icons.factory_outlined,
+                size: 64,
+                color: AppColors.primary,
+              ),
               const SizedBox(height: 24),
               const Text(
                 'Tutorial complete',

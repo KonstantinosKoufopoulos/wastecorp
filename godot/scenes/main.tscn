@@ -1,4 +1,4 @@
-[gd_scene load_steps=23 format=3 uid="uid://wastecorp_main"]
+[gd_scene load_steps=29 format=3 uid="uid://wastecorp_main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
@@ -8,6 +8,12 @@
 [ext_resource type="Script" path="res://scripts/press_zone.gd" id="6_press"]
 [ext_resource type="Script" path="res://scripts/worker_npc.gd" id="7_worker"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="8_hud"]
+[ext_resource type="PackedScene" uid="uid://h6grigr5fov8" path="res://assets/models/player.glb" id="9_player_glb"]
+[ext_resource type="PackedScene" uid="uid://cqfotsngqw8tc" path="res://assets/models/bin_plastic.glb" id="10_bin_plastic"]
+[ext_resource type="PackedScene" uid="uid://cf7nq0ihrurts" path="res://assets/models/bin_metal.glb" id="11_bin_metal"]
+[ext_resource type="PackedScene" uid="uid://daxgqhpt3pc8f" path="res://assets/models/bin_paper.glb" id="12_bin_paper"]
+[ext_resource type="PackedScene" uid="uid://svyk0ma3ucy7" path="res://assets/models/trash_item.glb" id="13_trash_item"]
+[ext_resource type="PackedScene" uid="uid://dqljp7ye03fvr" path="res://assets/models/yard_props.glb" id="14_yard_props"]
 
 [sub_resource type="BoxMesh" id="BoxMesh_floor"]
 size = Vector3(40, 0.4, 40)
@@ -83,6 +89,9 @@ material_override = SubResource("Mat_floor")
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Floor"]
 shape = SubResource("BoxShape_floor")
 
+[node name="YardProps" parent="Yard" instance=ExtResource("14_yard_props")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.2, -4)
+
 [node name="Bins" type="Node3D" parent="Yard"]
 
 [node name="BinPlastic" type="Area3D" parent="Yard/Bins"]
@@ -95,7 +104,11 @@ script = ExtResource("5_bin")
 accepts = "plastic"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Yard/Bins/BinPlastic"]
+visible = false
 mesh = SubResource("BoxMesh_bin")
+
+[node name="BinModel" parent="Yard/Bins/BinPlastic" instance=ExtResource("10_bin_plastic")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.6, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Bins/BinPlastic"]
 shape = SubResource("BoxShape_bin")
@@ -117,7 +130,11 @@ accepts = "metal"
 unlocked = false
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Yard/Bins/BinMetal"]
+visible = false
 mesh = SubResource("BoxMesh_bin")
+
+[node name="BinModel" parent="Yard/Bins/BinMetal" instance=ExtResource("11_bin_metal")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.6, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Bins/BinMetal"]
 shape = SubResource("BoxShape_bin")
@@ -139,7 +156,11 @@ accepts = "paper"
 unlocked = false
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Yard/Bins/BinPaper"]
+visible = false
 mesh = SubResource("BoxMesh_bin")
+
+[node name="BinModel" parent="Yard/Bins/BinPaper" instance=ExtResource("12_bin_paper")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.6, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Bins/BinPaper"]
 shape = SubResource("BoxShape_bin")
@@ -162,7 +183,11 @@ script = ExtResource("4_trash")
 trash_type = "plastic"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Yard/Trash/TrashPlastic1"]
+visible = false
 mesh = SubResource("BoxMesh_trash")
+
+[node name="TrashModel" parent="Yard/Trash/TrashPlastic1" instance=ExtResource("13_trash_item")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Trash/TrashPlastic1"]
 shape = SubResource("BoxShape_trash")
@@ -177,7 +202,11 @@ script = ExtResource("4_trash")
 trash_type = "metal"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Yard/Trash/TrashMetal1"]
+visible = false
 mesh = SubResource("BoxMesh_trash")
+
+[node name="TrashModel" parent="Yard/Trash/TrashMetal1" instance=ExtResource("13_trash_item")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Trash/TrashMetal1"]
 shape = SubResource("BoxShape_trash")
@@ -192,7 +221,11 @@ script = ExtResource("4_trash")
 trash_type = "paper"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Yard/Trash/TrashPaper1"]
+visible = false
 mesh = SubResource("BoxMesh_trash")
+
+[node name="TrashModel" parent="Yard/Trash/TrashPaper1" instance=ExtResource("13_trash_item")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Trash/TrashPaper1"]
 shape = SubResource("BoxShape_trash")
@@ -207,7 +240,11 @@ script = ExtResource("4_trash")
 trash_type = "plastic"
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Yard/Trash/TrashPlastic2"]
+visible = false
 mesh = SubResource("BoxMesh_trash")
+
+[node name="TrashModel" parent="Yard/Trash/TrashPlastic2" instance=ExtResource("13_trash_item")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.2, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Yard/Trash/TrashPlastic2"]
 shape = SubResource("BoxShape_trash")
@@ -244,8 +281,12 @@ script = ExtResource("2_player")
 camera_path = NodePath("../FollowCamera")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="Player"]
+visible = false
 mesh = SubResource("CapsuleMesh_player")
 material_override = SubResource("Mat_player")
+
+[node name="PlayerModel" parent="Player" instance=ExtResource("9_player_glb")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.8, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player"]
 shape = SubResource("CapsuleShape_player")

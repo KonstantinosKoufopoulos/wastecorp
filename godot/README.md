@@ -21,7 +21,7 @@ godot4 --path /path/to/waste_corp/godot
 |--------|--------|
 | Engine | Godot 4 |
 | Player | `CharacterBody3D` + `AnimationPlayer` |
-| Meshes | Placeholders (boxes/capsule) until Alex 3D `.glb` |
+| Meshes | Alex 3D `.glb` in `assets/models/` (placeholders kept hidden) |
 | Save | `ConfigFile` + JSON export (`SaveService`) |
 | HUD | `Control` / CanvasLayer |
 | Mobile UI | No Flutter for v1 3D |
@@ -66,14 +66,20 @@ godot/
 
 Autoloads: `SaveService`, `TutorialState`.
 
-## Placeholder → `.glb` swap path
+## Models path (Alex 3D)
 
-1. Export / receive models from Alex 3D into `assets/models/` (e.g. `player.glb`, `bin_plastic.glb`, `trash_plastic.glb`, `press.glb`, `worker.glb`, `truck.glb`).
-2. In `scenes/main.tscn`, select the relevant `MeshInstance3D` (or replace the node with an instanced `.glb` scene).
-3. Keep scripts / `Area3D` collision shapes — only visual meshes change.
-4. Optional: re-target `AnimationPlayer` clips from the GLB skeleton; keep method names on `player.gd` (`try_interact`, carry anchor).
+GLB assets live in **`assets/models/`**:
 
-Until then, colored `BoxMesh` / `CapsuleMesh` placeholders are intentional.
+| File | Used for |
+|------|----------|
+| `player.glb` | Player visual + `idle` / `walk` / `carry_idle` / `deposit` clips |
+| `bin_plastic.glb` / `bin_metal.glb` / `bin_paper.glb` | Sorting bin visuals |
+| `trash_item.glb` | Trash pickups + carry mesh |
+| `yard_props.glb` | Yard decoration (crate, pallet, pile, fence, mound) |
+
+Instanced under `scenes/main.tscn`. Gameplay collision (`CharacterBody3D` / `Area3D`) is unchanged — only visuals swapped. Press / worker / truck remain placeholders until later assets.
+
+See also `assets/models/README.md` for scale, materials, and animation notes.
 
 ## Save data
 

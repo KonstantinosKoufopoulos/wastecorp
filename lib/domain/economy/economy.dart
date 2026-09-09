@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../services/storage_service.dart';
+
 /// Cash & simple economy state for the tutorial loop.
 class EconomyState {
   const EconomyState({
@@ -18,22 +20,26 @@ class EconomyState {
 
 class EconomyNotifier extends Notifier<EconomyState> {
   @override
-  EconomyState build() => const EconomyState();
+  EconomyState build() => EconomyState(cash: StorageService.getCash());
 
-  void addCash(int amount) {
-    state = state.copyWith(
-      cash: state.cash + amount,
-      lastCashPop: amount,
-    );
+  Future<void> addCash(int amount) async {
+    final next = state.cash + amount;
+    state = state.copyWith(cash: next, lastCashPop: amount);
+    await StorageService.setCash(next);
   }
 
-  bool spend(int amount) {
+  Future<bool> spend(int amount) async {
     if (state.cash < amount) return false;
-    state = state.copyWith(cash: state.cash - amount, lastCashPop: 0);
+    final next = state.cash - amount;
+    state = state.copyWith(cash: next, lastCashPop: 0);
+    await StorageService.setCash(next);
     return true;
   }
 
-  void reset() => state = const EconomyState();
+  Future<void> reset() async {
+    state = const EconomyState();
+    await StorageService.setCash(0);
+  }
 }
 
 final economyProvider =

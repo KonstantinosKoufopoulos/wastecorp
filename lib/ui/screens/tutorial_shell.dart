@@ -20,16 +20,30 @@ class TutorialShell extends ConsumerStatefulWidget {
 }
 
 class _TutorialShellState extends ConsumerState<TutorialShell> {
-  int step = 0;
+  int? step; // null until Hive load
+
+  @override
+  void initState() {
+    super.initState();
+    final saved = StorageService.getTutorialStep();
+    step = saved.clamp(0, 7);
+  }
 
   Future<void> _go(int next) async {
     await StorageService.setTutorialStep(next);
+    if (!mounted) return;
     setState(() => step = next);
   }
 
   @override
   Widget build(BuildContext context) {
-    return switch (step) {
+    final s = step;
+    if (s == null) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+    return switch (s) {
       0 => S0SplashYardScreen(onStart: () => _go(1)),
       1 => S1SortScreen(onContinue: () => _go(2)),
       2 => S2PlasticPressScreen(onContinue: () => _go(3)),

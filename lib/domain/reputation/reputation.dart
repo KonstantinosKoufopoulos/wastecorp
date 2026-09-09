@@ -1,5 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../services/storage_service.dart';
+
 class ReputationState {
   const ReputationState({this.points = 0});
 
@@ -11,13 +13,19 @@ class ReputationState {
 
 class ReputationNotifier extends Notifier<ReputationState> {
   @override
-  ReputationState build() => const ReputationState();
+  ReputationState build() =>
+      ReputationState(points: StorageService.getReputation());
 
-  void add(int amount) {
-    state = state.copyWith(points: state.points + amount);
+  Future<void> add(int amount) async {
+    final next = state.points + amount;
+    state = state.copyWith(points: next);
+    await StorageService.setReputation(next);
   }
 
-  void reset() => state = const ReputationState();
+  Future<void> reset() async {
+    state = const ReputationState();
+    await StorageService.setReputation(0);
+  }
 }
 
 final reputationProvider =

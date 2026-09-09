@@ -19,9 +19,9 @@ class S3HireScreen extends ConsumerStatefulWidget {
 class _S3HireScreenState extends ConsumerState<S3HireScreen> {
   bool hired = false;
 
-  void _hire() {
-    final ok = ref.read(economyProvider.notifier).spend(kWorkerHireCost);
-    if (!ok) return;
+  Future<void> _hire() async {
+    final ok = await ref.read(economyProvider.notifier).spend(kWorkerHireCost);
+    if (!ok || !mounted) return;
     setState(() => hired = true);
   }
 

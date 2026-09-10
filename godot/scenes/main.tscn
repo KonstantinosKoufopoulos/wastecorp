@@ -1,4 +1,4 @@
-[gd_scene load_steps=29 format=3 uid="uid://wastecorp_main"]
+[gd_scene load_steps=30 format=3 uid="uid://wastecorp_main"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_main"]
 [ext_resource type="Script" path="res://scripts/player.gd" id="2_player"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/press_zone.gd" id="6_press"]
 [ext_resource type="Script" path="res://scripts/worker_npc.gd" id="7_worker"]
 [ext_resource type="Script" path="res://scripts/hud.gd" id="8_hud"]
+[ext_resource type="Script" path="res://scripts/virtual_stick.gd" id="10_stick"]
 [ext_resource type="PackedScene" uid="uid://h6grigr5fov8" path="res://assets/models/player.glb" id="9_player_glb"]
 [ext_resource type="PackedScene" uid="uid://cqfotsngqw8tc" path="res://assets/models/bin_plastic.glb" id="10_bin_plastic"]
 [ext_resource type="PackedScene" uid="uid://cf7nq0ihrurts" path="res://assets/models/bin_metal.glb" id="11_bin_metal"]
@@ -302,9 +303,6 @@ monitorable = false
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Player/InteractArea"]
 shape = SubResource("SphereShape_interact")
-
-[node name="AnimationPlayer" type="AnimationPlayer" parent="Player"]
-
 [node name="FollowCamera" type="Camera3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.707, 0.707, 0, -0.707, 0.707, 0, 10, 14)
 current = true
@@ -459,3 +457,34 @@ grow_horizontal = 2
 grow_vertical = 2
 theme_override_font_sizes/font_size = 20
 text = "E / Pick"
+
+[node name="VirtualStick" type="Control" parent="HUD/HUDRoot"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -200.0
+offset_right = 176.0
+offset_bottom = -40.0
+grow_vertical = 0
+script = ExtResource("10_stick")
+player_path = NodePath("../../../Player")
+
+[node name="Base" type="Panel" parent="HUD/HUDRoot/VirtualStick"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Knob" type="Panel" parent="HUD/HUDRoot/VirtualStick"]
+custom_minimum_size = Vector2(56, 56)
+layout_mode = 0
+offset_left = 52.0
+offset_top = 52.0
+offset_right = 108.0
+offset_bottom = 108.0
+mouse_filter = 2

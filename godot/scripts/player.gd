@@ -14,7 +14,7 @@ const JUMP_VELOCITY := 0.0  # grounded yard — no jump needed
 @onready var interact_area: Area3D = $InteractArea
 @onready var player_model: Node3D = $PlayerModel
 @onready var anim: AnimationPlayer = (
-	$PlayerModel/AnimationPlayer if has_node("PlayerModel/AnimationPlayer") else $AnimationPlayer
+	$PlayerModel/AnimationPlayer if has_node("PlayerModel/AnimationPlayer") else null
 )
 
 var _gravity: float = ProjectSettings.get_setting("physics/3d/default_gravity")
@@ -35,29 +35,13 @@ func _ready() -> void:
 	_play_anim("idle")
 
 func _ensure_idle_anim() -> void:
-	## Prefer real GLB clips (idle/walk/carry_idle/deposit). Fallback fake library if missing.
+	## Clips come only from player.glb AnimationPlayer (idle/walk/carry_idle/deposit).
 	if anim == null:
+		push_warning("PlayerModel/AnimationPlayer missing — no GLB clips")
 		return
-	if anim.has_animation("idle") and anim.has_animation("walk"):
-		return
-	if anim.has_animation("player/idle") and anim.has_animation("player/walk"):
-		return
-	var lib := AnimationLibrary.new()
-	var idle := Animation.new()
-	idle.length = 1.0
-	lib.add_animation("idle", idle)
-	var walk := Animation.new()
-	walk.length = 0.6
-	lib.add_animation("walk", walk)
-	var carry_idle := Animation.new()
-	carry_idle.length = 1.0
-	lib.add_animation("carry_idle", carry_idle)
-	var deposit := Animation.new()
-	deposit.length = 0.8
-	lib.add_animation("deposit", deposit)
-	if anim.has_animation_library("player"):
-		anim.remove_animation_library("player")
-	anim.add_animation_library("player", lib)
+	for clip in ["idle", "walk", "carry_idle", "deposit"]:
+		if not anim.has_animation(clip) and not anim.has_animation("player/" + clip):
+			push_warning("Missing player.glb animation clip: %s" % clip)
 
 func _resolve_anim_name(clip: String) -> String:
 	if anim == null:

@@ -21,7 +21,7 @@ migrate_working_dir/
 godot/.godot/
 godot/android/
 godot/ios/
-godot/export_presets.cfg
+# godot/export_presets.cfg  # committed so team can re-export web
 godot/*.translation
 .import/
 
@@ -43,3 +43,6 @@ app.*.map.json
 # Misc
 /build/
 /coverage/
+
+# Web export output (deployed via gh-pages, not main)
+/export/
